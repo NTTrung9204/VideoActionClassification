@@ -1,7 +1,7 @@
 import torch.nn as nn
 from build_model import LSTMModel
 from torch.utils.data import DataLoader
-from utils import load_txt_file, train
+from utils import load_txt_file, train, load_data, mapping_action_name_to_label
 from UCFDataset import UCFDataset
 import torch.optim as optim
 import torch
@@ -12,38 +12,36 @@ if __name__ == "__main__":
     HIDDEN_DIM = 256
     NUM_LAYERS = 2
     NUM_CLASSES = 101
-    MAX_LEN = 100
+    MAX_LEN = 50
     BATCH_SIZE = 128
     LEARNING_RATE = 0.001
-    NUM_EPOCHS = 1
+    NUM_EPOCHS = 50
     INFOR_DATASET_PATH = "dataset/UCF101TrainTestSplits-RecognitionTask/ucfTrainTestlist/trainlist03.txt"
     DATASET_PATH = "dataset/UCF101/UCF-101/"
 
-    infor_data_train, infor_data_test = load_txt_file(INFOR_DATASET_PATH)
+    # infor_data_train, infor_data_test = load_txt_file(INFOR_DATASET_PATH)
+    infor_data_train, list_video_name_train = load_data("train_set.pth")
+    infor_data_test, list_video_name_test = load_data("test_set.pth")
 
-    train_dataset = UCFDataset(infor_data_train, DATASET_PATH)
-    test_dataset = UCFDataset(infor_data_test, DATASET_PATH)
+    mapping = mapping_action_name_to_label(INFOR_DATASET_PATH)
+
+    train_dataset = UCFDataset(infor_data_train, mapping, list_video_name_train)
+    test_dataset = UCFDataset(infor_data_test, mapping, list_video_name_test)
 
     print(f"Training size: {len(train_dataset)}, Testing size: {len(test_dataset)}")
 
     train_data_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-    for batch in train_data_loader:
-        data, label = batch
-        print(data.shape)
-        print(label)
-        
-        exit()
-
     test_data_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
 
-    model = LSTMModel(hidden_dim=HIDDEN_DIM, input_dim=INPUT_DIM, num_classes=NUM_LAYERS, num_layers=NUM_CLASSES)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = LSTMModel(hidden_dim=HIDDEN_DIM, input_dim=INPUT_DIM, num_classes=NUM_CLASSES, num_layers=NUM_LAYERS)
+    model.to(device)
 
     criterion = nn.CrossEntropyLoss()
 
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     train_losses, valid_accuracies = train(model, train_data_loader, test_data_loader, criterion, optimizer, device, NUM_EPOCHS)
 
@@ -65,5 +63,5 @@ if __name__ == "__main__":
 
     plt.show()
 
-    torch.save(model.state_dict(), "trained_model.pth")
+    torch.save(model.state_dict(), "trained_model_v2.pth")
     print("Model saved successfully.")
