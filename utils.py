@@ -6,6 +6,7 @@ from PIL import Image
 import random
 import torch
 from sklearn.metrics import accuracy_score
+import sys
 
 import warnings
 
@@ -69,6 +70,42 @@ def load_txt_file(file_path):
     test_data = lines[train_size:]
 
     return train_data, test_data
+
+def save_data(infor_data, DATASET_PATH, saved_name):
+    dict = {}
+    data_size = len(infor_data)
+    for index, data in enumerate(infor_data):
+        sys.stdout.write(f"\rExtracting [{index:4d}|{data_size}]")
+
+        video_name, label = data.split()
+
+        dict[video_name] = extract_feature_video(DATASET_PATH + video_name)
+
+    torch.save(dict, f"{saved_name}.pth")
+
+    print("Save successfully!")
+
+def load_data(decode_data):
+    encode_data = torch.load(decode_data)
+
+    return encode_data, list(encode_data.keys())
+
+def mapping_action_name_to_label(txt_file):
+    with open(txt_file, 'r') as file:
+        lines = file.readlines()
+
+    lines = [line.strip() for line in lines]
+
+    mapping = {}
+
+    for line in lines:
+        video_name, label = line.split()
+
+        action_name, _ = video_name.split("/")
+
+        mapping[action_name] = int(label) - 1
+
+    return mapping
 
 def train(model, train_loader, valid_loader, criterion, optimizer, device, num_epochs=10):
     train_losses = []
