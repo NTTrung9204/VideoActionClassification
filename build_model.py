@@ -37,3 +37,22 @@ class SimpleRNNModel(nn.Module):
         x = self.fcs(x[:, -1, :])
 
         return x
+
+class GRUModel(nn.Module):
+    def __init__(self, hidden_dim, input_dim, num_layers, num_classes):
+        super(GRUModel, self).__init__()
+
+        self.hidden_dim = hidden_dim
+        self.input_dim = input_dim
+        self.num_layers = num_layers
+
+        self.gru = nn.GRU(input_dim, hidden_dim, num_layers, batch_first=True)
+
+        self.fcs = nn.Linear(hidden_dim, num_classes)
+
+    def forward(self, x):
+        x, _ = self.gru(x)
+
+        x = self.fcs(x[:, -1, :])
+
+        return x
