@@ -107,6 +107,23 @@ def mapping_action_name_to_label(txt_file):
 
     return mapping
 
+def mapping_label_to_action_name(txt_file):
+    with open(txt_file, 'r') as file:
+        lines = file.readlines()
+
+        lines = [line.strip() for line in lines]
+
+    mapping = {}
+
+    for line in lines:
+        video_name, label = line.split()
+
+        action_name, _ = video_name.split("/")
+
+        mapping[int(label) - 1] = action_name
+
+    return mapping
+
 def train(model, train_loader, valid_loader, criterion, optimizer, device, num_epochs=10):
     train_losses = []
     valid_accuracies = []
